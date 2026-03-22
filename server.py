@@ -236,6 +236,29 @@ def get_welcome():
 def home():
     return open('index.html', encoding='utf-8').read()
 
+from twilio.twiml.messaging_response import MessagingResponse
+
+@app.route('/whatsapp', methods=['POST'])
+def whatsapp():
+    incoming_msg = request.form.get('Body', '').strip()
+    sender = request.form.get('From', '')
+    
+    # Detect language from message (default Hindi)
+    lang_name = "हिंदी (Hindi)"
+    
+    # Build messages
+    messages = [{"role": "user", "content": incoming_msg}]
+    system_prompt = get_system_prompt(lang_name)
+    full_messages = [{"role": "system", "content": system_prompt}] + messages
+    
+    # Get AI reply
+    reply = get_groq_response(full_messages)
+    
+    # Send back via Twilio
+    resp = MessagingResponse()
+    resp.message(reply)
+    return str(resp)
+
 if __name__ == '__main__':
     print("=" * 55)
     print("🌾 GramSevak Server — Apna Haq, Apni Bhasha 🇮🇳")
