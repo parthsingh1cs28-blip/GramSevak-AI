@@ -5,12 +5,37 @@ from dotenv import load_dotenv
 import os
 import tempfile
 import base64
+import random
 from gtts import gTTS
 
 load_dotenv()
 app = Flask(__name__)
 CORS(app)
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+GROQ_KEYS = [k for k in [
+    os.getenv("GROQ_KEY_1"),
+    os.getenv("GROQ_KEY_2"),
+    os.getenv("GROQ_KEY_3"),
+    os.getenv("GROQ_KEY_4"),
+    os.getenv("GROQ_KEY_5"),
+] if k]
+
+def get_groq_response(messages):
+    random.shuffle(GROQ_KEYS)
+    for key in GROQ_KEYS:
+        try:
+            client = Groq(api_key=key)
+            response = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=messages
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            if "429" in str(e) or "quota" in str(e).lower() or "rate" in str(e).lower():
+                print("Key exhausted, trying next...")
+                continue
+            else:
+                raise e
+    return "सभी keys उपयोग हो गई हैं। थोड़ी देर बाद प्रयास करें। All keys exhausted. Try again later."
 
 WELCOME_MESSAGES = {
     "hi":           "नमस्ते! मैं GramSevak हूँ। टाइप करने के लिए एक दबाएं। बोलने के लिए दो दबाएं। बताइए आपकी क्या समस्या है?",
@@ -169,11 +194,7 @@ def chat():
     lang_name = data.get('lang_name', 'हिंदी (Hindi)')
     system_prompt = get_system_prompt(lang_name)
     full_messages = [{"role": "system", "content": system_prompt}] + messages
-    response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=full_messages
-    )
-    reply = response.choices[0].message.content
+    reply = get_groq_response(full_messages)
     return jsonify({"reply": reply})
 
 @app.route('/speak', methods=['POST'])
