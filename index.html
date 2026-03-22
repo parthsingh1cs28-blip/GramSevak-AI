@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GramSevak AI — Apna Haq, Apni Bhasha</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --saffron: #FF6B00;
+    --saffron-glow: #FF8C00;
+    --white: #F5F0E8;
+    --green: #00A86B;
+    --deep: #070A0F;
+    --surface2: #161B22;
+    --surface3: #1C2333;
+    --border: rgba(255,107,0,0.15);
+    --text-dim: rgba(245,240,232,0.45);
+    --text-mid: rgba(245,240,232,0.75);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:var(--deep); color:var(--white); min-height:100vh; overflow-x:hidden; }
+  .bg-aura { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+  .aura-1 { position:absolute; width:600px; height:600px; border-radius:50%; background:radial-gradient(circle,rgba(255,107,0,0.08) 0%,transparent 70%); top:-200px; left:-200px; animation:floatAura 12s ease-in-out infinite; }
+  .aura-2 { position:absolute; width:500px; height:500px; border-radius:50%; background:radial-gradient(circle,rgba(0,168,107,0.07) 0%,transparent 70%); bottom:-150px; right:-150px; animation:floatAura 15s ease-in-out infinite reverse; }
+  .aura-3 { position:absolute; width:300px; height:300px; border-radius:50%; background:radial-gradient(circle,rgba(255,140,0,0.05) 0%,transparent 70%); top:50%; left:50%; transform:translate(-50%,-50%); animation:pulse 8s ease-in-out infinite; }
+  @keyframes floatAura { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(30px,-30px) scale(1.05)} 66%{transform:translate(-20px,20px) scale(0.95)} }
+  @keyframes pulse { 0%,100%{opacity:0.5;transform:translate(-50%,-50%) scale(1)} 50%{opacity:1;transform:translate(-50%,-50%) scale(1.2)} }
+  .grid-overlay { position:fixed; inset:0; pointer-events:none; z-index:0; background-image:linear-gradient(rgba(255,107,0,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,107,0,0.03) 1px,transparent 1px); background-size:60px 60px; }
+  .app { position:relative; z-index:1; display:grid; grid-template-rows:auto 1fr auto; height:100vh; max-width:900px; margin:0 auto; padding:0 20px; }
+  header { padding:20px 0 16px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); animation:slideDown 0.6s ease; }
+  @keyframes slideDown { from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:translateY(0)} }
+  .logo { display:flex; align-items:center; gap:14px; }
+  .logo-icon { width:44px; height:44px; background:linear-gradient(135deg,var(--saffron),var(--saffron-glow)); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px; box-shadow:0 0 20px rgba(255,107,0,0.3); animation:iconPulse 3s ease-in-out infinite; }
+  @keyframes iconPulse { 0%,100%{box-shadow:0 0 20px rgba(255,107,0,0.3)} 50%{box-shadow:0 0 35px rgba(255,107,0,0.5)} }
+  .logo-text h1 { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; letter-spacing:-0.5px; background:linear-gradient(90deg,var(--saffron),var(--white)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .logo-text p { font-size:11px; color:var(--text-dim); letter-spacing:1.5px; text-transform:uppercase; margin-top:1px; }
+  .header-right { display:flex; align-items:center; gap:12px; }
+  .status-dot { width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); animation:blink 2s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .lang-selector { position:relative; }
+  .lang-btn { display:flex; align-items:center; gap:8px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:8px 14px; color:var(--white); font-family:'DM Sans',sans-serif; font-size:13px; cursor:pointer; transition:all 0.2s; }
+  .lang-btn:hover { border-color:rgba(255,107,0,0.4); background:var(--surface3); }
+  .lang-btn .arrow { font-size:10px; color:var(--text-dim); transition:transform 0.2s; }
+  .lang-btn.open .arrow { transform:rotate(180deg); }
+  .lang-dropdown { position:absolute; top:calc(100% + 8px); right:0; background:var(--surface2); border:1px solid var(--border); border-radius:14px; padding:8px; min-width:250px; max-height:380px; overflow-y:auto; z-index:100; display:none; box-shadow:0 20px 60px rgba(0,0,0,0.5); }
+  .lang-dropdown.open { display:block; animation:dropIn 0.2s ease; }
+  @keyframes dropIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+  .lang-dropdown::-webkit-scrollbar { width:4px; }
+  .lang-dropdown::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+  .lang-option { padding:9px 12px; border-radius:8px; cursor:pointer; font-size:13px; transition:all 0.15s; display:flex; align-items:center; gap:10px; }
+  .lang-option:hover { background:var(--surface3); color:var(--saffron); }
+  .lang-option.active { background:rgba(255,107,0,0.1); color:var(--saffron); }
+  .lang-option .lang-native { font-size:11px; color:var(--text-dim); }
+  .chat-area { overflow-y:auto; padding:20px 0; scroll-behavior:smooth; }
+  .chat-area::-webkit-scrollbar { width:4px; }
+  .chat-area::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+  .welcome { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:40px 20px; animation:fadeIn 0.8s ease; gap:18px; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+  .welcome-orb { width:90px; height:90px; border-radius:50%; background:linear-gradient(135deg,var(--saffron),var(--green)); display:flex; align-items:center; justify-content:center; font-size:40px; box-shadow:0 0 60px rgba(255,107,0,0.3),0 0 120px rgba(0,168,107,0.15); animation:orbFloat 4s ease-in-out infinite; }
+  @keyframes orbFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  .welcome h2 { font-family:'Syne',sans-serif; font-size:26px; font-weight:800; letter-spacing:-0.5px; }
+  .welcome p { color:var(--text-mid); font-size:14px; max-width:420px; line-height:1.6; }
+  .welcome-chips { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:4px; }
+  .chip { background:var(--surface2); border:1px solid var(--border); border-radius:100px; padding:8px 16px; font-size:13px; color:var(--text-mid); cursor:pointer; transition:all 0.2s; }
+  .chip:hover { border-color:var(--saffron); color:var(--saffron); background:rgba(255,107,0,0.05); transform:translateY(-2px); }
+  .message { display:flex; gap:12px; padding:6px 0; animation:messageIn 0.4s ease; }
+  @keyframes messageIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  .message.user { flex-direction:row-reverse; }
+  .msg-avatar { width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; margin-top:4px; }
+  .message.ai .msg-avatar { background:linear-gradient(135deg,var(--saffron),var(--saffron-glow)); box-shadow:0 0 15px rgba(255,107,0,0.25); }
+  .message.user .msg-avatar { background:var(--surface3); border:1px solid var(--border); }
+  .msg-content { max-width:72%; }
+  .message.user .msg-content { align-items:flex-end; display:flex; flex-direction:column; }
+  .msg-bubble { padding:12px 15px; border-radius:16px; font-size:14px; line-height:1.7; }
+  .message.ai .msg-bubble { background:var(--surface2); border:1px solid var(--border); border-top-left-radius:4px; }
+  .message.user .msg-bubble { background:linear-gradient(135deg,var(--saffron),var(--saffron-glow)); border-top-right-radius:4px; color:#fff; }
+  .msg-time { font-size:10px; color:var(--text-dim); margin-top:4px; padding:0 4px; }
+  .typing { display:flex; gap:12px; padding:6px 0; animation:messageIn 0.4s ease; }
+  .typing-dots { background:var(--surface2); border:1px solid var(--border); border-radius:16px; border-top-left-radius:4px; padding:14px 18px; display:flex; gap:5px; align-items:center; }
+  .dot { width:7px; height:7px; border-radius:50%; background:var(--saffron); animation:typingDot 1.4s ease-in-out infinite; }
+  .dot:nth-child(2){animation-delay:0.2s} .dot:nth-child(3){animation-delay:0.4s}
+  @keyframes typingDot { 0%,60%,100%{transform:translateY(0);opacity:0.4} 30%{transform:translateY(-6px);opacity:1} }
+  .input-area { padding:14px 0 24px; border-top:1px solid var(--border); }
+  .tricolor { height:3px; background:linear-gradient(90deg,var(--saffron) 33%,white 33%,white 66%,var(--green) 66%); border-radius:2px; margin-bottom:14px; opacity:0.5; }
+  .status-bar { display:flex; align-items:center; gap:8px; margin-bottom:10px; font-size:12px; color:var(--text-dim); min-height:22px; }
+  .voice-wave { display:none; align-items:center; gap:4px; }
+  .voice-wave.active { display:flex; }
+  .wave-bar { width:3px; background:var(--green); border-radius:2px; animation:waveBounce 0.8s ease-in-out infinite; }
+  .wave-bar:nth-child(1){height:10px} .wave-bar:nth-child(2){height:18px;animation-delay:0.1s} .wave-bar:nth-child(3){height:14px;animation-delay:0.2s} .wave-bar:nth-child(4){height:20px;animation-delay:0.15s} .wave-bar:nth-child(5){height:12px;animation-delay:0.05s}
+  @keyframes waveBounce { 0%,100%{transform:scaleY(0.5);opacity:0.5} 50%{transform:scaleY(1);opacity:1} }
+  .speaking-bar { display:none; align-items:center; gap:8px; background:rgba(0,168,107,0.08); border:1px solid rgba(0,168,107,0.2); border-radius:100px; padding:5px 12px; font-size:12px; color:var(--green); }
+  .speaking-bar.active { display:flex; }
+  .speaking-bar button { background:none; border:none; color:var(--green); cursor:pointer; font-size:11px; font-family:'DM Sans',sans-serif; }
+  .input-row { display:flex; gap:10px; align-items:flex-end; }
+  .input-box { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:16px; padding:14px 18px; color:var(--white); font-family:'DM Sans',sans-serif; font-size:14px; resize:none; outline:none; transition:border-color 0.2s,box-shadow 0.2s; min-height:52px; max-height:120px; line-height:1.5; }
+  .input-box::placeholder { color:var(--text-dim); }
+  .input-box:focus { border-color:rgba(255,107,0,0.5); box-shadow:0 0 0 3px rgba(255,107,0,0.08); }
+  .btn-icon { width:52px; height:52px; border-radius:14px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:20px; transition:all 0.2s; flex-shrink:0; }
+  .btn-send { background:linear-gradient(135deg,var(--saffron),var(--saffron-glow)); color:white; box-shadow:0 4px 20px rgba(255,107,0,0.3); }
+  .btn-send:hover { transform:translateY(-2px); box-shadow:0 8px 25px rgba(255,107,0,0.4); }
+  .btn-send:active { transform:scale(0.95); }
+  .btn-mic { background:var(--surface2); border:1px solid var(--border); color:var(--text-mid); }
+  .btn-mic:hover { border-color:var(--green); color:var(--green); }
+  .btn-mic.listening { background:rgba(0,168,107,0.1); border-color:var(--green); color:var(--green); animation:micPulse 1s ease-in-out infinite; }
+  @keyframes micPulse { 0%,100%{box-shadow:0 0 20px rgba(0,168,107,0.2)} 50%{box-shadow:0 0 35px rgba(0,168,107,0.4)} }
+  @media(max-width:600px){ .app{padding:0 14px} .msg-content{max-width:85%} .logo-text p{display:none} }
+</style>
+</head>
+<body>
+<div class="bg-aura"><div class="aura-1"></div><div class="aura-2"></div><div class="aura-3"></div></div>
+<div class="grid-overlay"></div>
+<div class="app">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🌾</div>
+      <div class="logo-text">
+        <h1>GramSevak AI</h1>
+        <p>Apna Haq · Apni Bhasha · Apna Adhikar</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="status-dot"></div>
+      <div class="lang-selector">
+        <button class="lang-btn" id="langBtn" onclick="toggleLang()">
+          <span>🇮🇳</span>
+          <span id="langLabel">हिंदी</span>
+          <span class="arrow">▼</span>
+        </button>
+        <div class="lang-dropdown" id="langDropdown"></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="chat-area" id="chatArea">
+    <div class="welcome" id="welcomeScreen">
+      <div class="welcome-orb">🙏</div>
+      <h2>नमस्ते! I'm GramSevak</h2>
+      <p>Your AI guide to every government scheme in India. Speak or type in your language — I'll find what you deserve.</p>
+      <div class="welcome-chips">
+        <div class="chip" onclick="sendQuick('मुझे मकान चाहिए')">🏠 Housing</div>
+        <div class="chip" onclick="sendQuick('पढ़ाई के लिए छात्रवृत्ति')">📚 Scholarship</div>
+        <div class="chip" onclick="sendQuick('किसान योजना')">🌾 Farmer Help</div>
+        <div class="chip" onclick="sendQuick('गैस कनेक्शन चाहिए')">🔥 Gas Connection</div>
+        <div class="chip" onclick="sendQuick('बेटी के लिए योजना')">👧 Girl Child</div>
+        <div class="chip" onclick="sendQuick('स्वास्थ्य बीमा')">🏥 Health Insurance</div>
+        <div class="chip" onclick="sendQuick('किसान क्रेडिट कार्ड')">💳 Kisan Credit</div>
+        <div class="chip" onclick="sendQuick('वृद्धा पेंशन योजना')">👴 Old Age Pension</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <div class="tricolor"></div>
+    <div class="status-bar">
+      <div class="voice-wave" id="voiceWave">
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        <div class="wave-bar"></div><div class="wave-bar"></div>
+        <span style="margin-left:6px;color:var(--green);font-size:12px" id="listeningText">Listening...</span>
+      </div>
+      <div class="speaking-bar" id="speakingBar">
+        <span>🔊</span>
+        <span id="speakingText">GramSevak is speaking...</span>
+        <button onclick="stopSpeaking()">Stop ✕</button>
+      </div>
+    </div>
+    <div class="input-row">
+      <button class="btn-icon btn-mic" id="micBtn" onclick="toggleMic()" title="Speak in your language">🎤</button>
+      <textarea class="input-box" id="inputBox"
+        placeholder="अपनी समस्या बताइए... / Type your problem..."
+        rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="btn-icon btn-send" onclick="sendMessage()" title="Send">➤</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ALL 29 languages — same as gramsevak.py
+const LANGUAGES = [
+  { key:"hi-IN", label:"हिंदी",      name:"हिंदी (Hindi)",            dialect_key:"hi",           gtts:"hi" },
+  { key:"ta-IN", label:"தமிழ்",      name:"தமிழ் (Tamil)",            dialect_key:"ta",           gtts:"ta" },
+  { key:"te-IN", label:"తెలుగు",     name:"తెలుగు (Telugu)",          dialect_key:"te",           gtts:"te" },
+  { key:"ml-IN", label:"മലയാളം",     name:"മലയാളം (Malayalam)",       dialect_key:"ml",           gtts:"ml" },
+  { key:"mr-IN", label:"मराठी",      name:"मराठी (Marathi)",          dialect_key:"mr",           gtts:"mr" },
+  { key:"bn-IN", label:"বাংলা",      name:"বাংলা (Bengali)",          dialect_key:"bn",           gtts:"bn" },
+  { key:"gu-IN", label:"ગુજરાતી",    name:"ગુજરાતી (Gujarati)",       dialect_key:"gu",           gtts:"gu" },
+  { key:"pa-IN", label:"ਪੰਜਾਬੀ",     name:"ਪੰਜਾਬੀ (Punjabi)",         dialect_key:"pa",           gtts:"pa" },
+  { key:"kn-IN", label:"ಕನ್ನಡ",      name:"ಕನ್ನಡ (Kannada)",          dialect_key:"kn",           gtts:"kn" },
+  { key:"ur-IN", label:"اردو",       name:"اردو (Urdu)",              dialect_key:"ur",           gtts:"ur" },
+  { key:"or-IN", label:"ओडिआ",       name:"ओडिआ (Odia)",             dialect_key:"or",           gtts:"or" },
+  { key:"as-IN", label:"অসমীয়া",    name:"অসমীয়া (Assamese)",       dialect_key:"as",           gtts:"as" },
+  { key:"sa-IN", label:"संस्कृत",    name:"संस्कृत (Sanskrit)",       dialect_key:"sa",           gtts:"hi" },
+  { key:"ne-IN", label:"नेपाली",     name:"नेपाली (Nepali/Pahadi)",   dialect_key:"ne",           gtts:"ne" },
+  { key:"hi-IN", label:"सिन्धी",    name:"सिन्धी (Sindhi)",         dialect_key:"sd",           gtts:"hi" },
+  { key:"hi-IN", label:"कोंकणी",    name:"कोंकणी (Konkani)",        dialect_key:"konkani",      gtts:"hi" },
+  { key:"hi-IN", label:"मैथिली",    name:"मैथिली (Maithili)",       dialect_key:"maithili",     gtts:"hi" },
+  { key:"hi-IN", label:"भोजपुरी",   name:"भोजपुरी (Bhojpuri)",      dialect_key:"bhojpuri",     gtts:"hi" },
+  { key:"hi-IN", label:"बघेली",     name:"बघेली (Bagheli)",         dialect_key:"bagheli",      gtts:"hi" },
+  { key:"hi-IN", label:"बुन्देली",  name:"बुन्देली (Bundeli)",       dialect_key:"bundeli",      gtts:"hi" },
+  { key:"hi-IN", label:"छत्तीसगढ़ी",name:"छत्तीसगढ़ी (Chhattisgarhi)",dialect_key:"chhattisgarhi",gtts:"hi" },
+  { key:"hi-IN", label:"हरियाणवी",  name:"हरियाणवी (Haryanvi)",     dialect_key:"haryanvi",     gtts:"hi" },
+  { key:"hi-IN", label:"राजस्थानी", name:"राजस्थानी (Rajasthani)",  dialect_key:"rajasthani",   gtts:"hi" },
+  { key:"hi-IN", label:"डोगरी",     name:"डोगरी (Dogri)",           dialect_key:"dogri",        gtts:"hi" },
+  { key:"hi-IN", label:"मणिपुरी",   name:"मणिपुरी (Manipuri)",      dialect_key:"manipuri",     gtts:"hi" },
+  { key:"hi-IN", label:"বড়ো",       name:"বড়ো (Bodo)",              dialect_key:"bodo",         gtts:"hi" },
+  { key:"hi-IN", label:"संताली",    name:"संताली (Santali)",        dialect_key:"santali",      gtts:"hi" },
+  { key:"kn-IN", label:"তুলু",      name:"তুলু (Tulu)",             dialect_key:"tulu",         gtts:"kn" },
+  { key:"en-IN", label:"English",   name:"English",                  dialect_key:"en",           gtts:"en" },
+];
+
+// Welcome messages — same as gramsevak.py
+const WELCOME_MESSAGES = {
+  "hi":           "नमस्ते! मैं GramSevak हूँ। टाइप करने के लिए एक दबाएं। बोलने के लिए दो दबाएं। बताइए आपकी क्या समस्या है?",
+  "ta":           "வணக்கம்! நான் GramSevak. தட்டச்சு செய்ய 1, பேச 2 அழுத்தவும். உங்கள் பிரச்சனை என்ன?",
+  "te":           "నమస్కారం! నేను GramSevak. టైప్ చేయడానికి 1, మాట్లాడటానికి 2 నొక్కండి. మీ సమస్య ఏమిటి?",
+  "ml":           "നമസ്കാരം! ഞാൻ GramSevak. ടൈപ്പ് ചെയ്യാൻ 1, സംസാരിക്കാൻ 2. നിങ്ങളുടെ പ്രശ്നം എന്താണ്?",
+  "mr":           "नमस्कार! मी GramSevak आहे. टाइप करण्यासाठी 1, बोलण्यासाठी 2 दाबा. तुमची समस्या काय आहे?",
+  "bn":           "নমস্কার! আমি GramSevak। টাইপ করতে ১, বলতে ২ চাপুন। আপনার সমস্যা কী?",
+  "gu":           "નમસ્તે! હું GramSevak છું. ટાઇપ કરવા 1, બોલવા 2 દબાવો. તમારી સમસ્યા શું છે?",
+  "pa":           "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ GramSevak ਹਾਂ। ਟਾਈਪ ਕਰਨ ਲਈ 1, ਬੋਲਣ ਲਈ 2 ਦਬਾਓ। ਤੁਹਾਡੀ ਸਮੱਸਿਆ ਕੀ ਹੈ?",
+  "kn":           "ನಮಸ್ಕಾರ! ನಾನು GramSevak. ಟೈಪ್ ಮಾಡಲು 1, ಮಾತನಾಡಲು 2 ಒತ್ತಿ. ನಿಮ್ಮ ಸಮಸ್ಯೆ ಏನು?",
+  "ur":           "السلام علیکم! میں GramSevak ہوں۔ ٹائپ کرنے کے لیے 1، بولنے کے لیے 2 دبائیں۔ آپ کا مسئلہ کیا ہے؟",
+  "or":           "ନମସ୍କାର! ମୁଁ GramSevak। ଟାଇପ୍ କରିବାକୁ 1, କଥା ହେବାକୁ 2 ଦବାନ୍ତୁ। ଆପଣଙ୍କ ସମସ୍ୟା କ'ଣ?",
+  "as":           "নমস্কাৰ! মই GramSevak। টাইপ কৰিবলৈ 1, কথা কবলৈ 2 টিপক। আপোনাৰ সমস্যা কি?",
+  "sa":           "नमस्ते! अहं GramSevak अस्मि। टाइप कर्तुं 1 दबत्तु। वक्तुं 2 दबत्तु। भवतः किं समस्या अस्ति?",
+  "ne":           "नमस्ते! म GramSevak हुँ। टाइप गर्न 1, बोल्न 2 थिच्नुस्। तपाईंको समस्या के हो?",
+  "sd":           "اسلام عليڪم! آءٌ GramSevak آهيان۔ ٽائيپ ڪرڻ لاءِ 1، ڳالهائڻ لاءِ 2 دٻايو۔ توهانجي مسئلو ڇا آهي؟",
+  "konkani":      "देव बरें करूं! हांव GramSevak आसां। टाइप करुंक 1 दाबात। उलोवंक 2 दाबात। तुमची समस्या कितें?",
+  "maithili":     "प्रणाम! हम GramSevak छी। टाइप करबाक लेल 1 दबाउ। बजबाक लेल 2 दबाउ। अहाँक की समस्या अछि?",
+  "bhojpuri":     "प्रणाम! हम GramSevak हईं। टाइप करे खातिर 1 दबाईं। बोले खातिर 2 दबाईं। बताईं आपन का समस्या बा?",
+  "bagheli":      "राम राम भइया! हम GramSevak हवन। टाइप करे खातिर 1 दबाव, बोले खातिर 2 दबाव। का बात हय? हमका बताव।",
+  "bundeli":      "जै राम जी की भइया! हम GramSevak हन। टाइप करबे को 1 दबाओ, बोलबे को 2 दबाओ। तुमाओ का तकलीफ हय?",
+  "chhattisgarhi":"जोहार भइया! मैं GramSevak अंव। टाइप करे बर 1 दबावव, बोले बर 2 दबावव। तोर का तकलीफ हे? मोला बता।",
+  "haryanvi":     "राम राम भाई! मैं GramSevak हूं। टाइप करण खातर 1 दबा, बोलण खातर 2 दबा। के हाल सै? तेरी के समस्या सै?",
+  "rajasthani":   "खम्मा घणी! म्हैं GramSevak हूँ। टाइप करबा सारू 1 दबाओ, बोलबा सारू 2 दबाओ। थारी कांई समस्या हय?",
+  "dogri":        "नमस्कार! मैं GramSevak हां। टाइप करने लई 1 दबाओ। बोलने लई 2 दबाओ। दस्सो तुसाडी की समस्या ऐ?",
+  "manipuri":     "নমস্কার! ঐ GramSevak নি। টাইপ তৌবগী দা 1 থাজিল্লু। ৱারোল থৌদোকপগী দা 2 থাজিল্লু। নংগী মথৌ কদাইনো?",
+  "bodo":         "नमस्कार! आं GramSevak। टाइप करनाय लाय 1 दाब। बोलनाय लाय 2 दाब। नों मा समस्या आव?",
+  "santali":      "जोहार! आं GramSevak काना। टाइप करते 1 दबाव। बोलते 2 दबाव। दो तोहोर समस्या एटाक?",
+  "tulu":         "ನಮಸ್ಕಾರ! ಯಾನ್ GramSevak. ಟೈಪ್ ಮಲ್ಪೆರೆ 1, ಪಾತೆರೆರೆ 2 ಒತ್ತುಲೆ. ನಿಕ್ಕ ಎಂಚಿನ ತೊಂದರೆ ಉಂಡು?",
+  "en":           "Hello! I am GramSevak. Type your problem or click the mic to speak. I will find the right government scheme for you!",
+};
+
+let selectedLang = LANGUAGES[0];
+let conversation = [];
+let recognition = null;
+let isListening = false;
+
+// Build dropdown with all 29 languages
+const dd = document.getElementById('langDropdown');
+LANGUAGES.forEach((lang, i) => {
+  const div = document.createElement('div');
+  div.className = 'lang-option' + (i===0?' active':'');
+  div.innerHTML = `<span>🇮🇳</span><span class="lang-name">${lang.label}</span><span class="lang-native">${lang.name}</span>`;
+  div.onclick = () => selectLang(lang, div);
+  dd.appendChild(div);
+});
+
+function toggleLang() {
+  document.getElementById('langBtn').classList.toggle('open');
+  document.getElementById('langDropdown').classList.toggle('open');
+}
+
+function selectLang(lang, el) {
+  conversation = [];
+  selectedLang = lang;
+  document.getElementById('langLabel').textContent = lang.label;
+  document.querySelectorAll('.lang-option').forEach(o => o.classList.remove('active'));
+  el.classList.add('active');
+  toggleLang();
+  
+  document.getElementById('inputBox').placeholder = lang.dialect_key === 'en' ?
+    'Type your problem...' : 'अपनी समस्या बताइए...';
+  document.getElementById('chatArea').innerHTML = '';
+  showChips(lang);
+  const welcome = WELCOME_MESSAGES[lang.dialect_key] || WELCOME_MESSAGES['hi'];
+  addMessage(welcome, false);
+  speakText(welcome, lang);
+}
+
+function showWelcomeMessage(lang) {
+  const welcome = WELCOME_MESSAGES[lang.dialect_key] || WELCOME_MESSAGES['hi'];
+  addMessage(welcome, false);
+  speakText(welcome, lang);
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.lang-selector')) {
+    document.getElementById('langBtn').classList.remove('open');
+    document.getElementById('langDropdown').classList.remove('open');
+  }
+});
+
+function getTime() {
+  return new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+
+function addMessage(text, isUser) {
+  const w = document.getElementById('welcomeScreen');
+  if (w) w.remove();
+  const chat = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = `message ${isUser?'user':'ai'}`;
+  // Format bold text and newlines
+  const formatted = text
+    .replace(/\n/g,'<br>')
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g,'<em>$1</em>');
+  div.innerHTML = `
+    <div class="msg-avatar">${isUser?'👤':'🌾'}</div>
+    <div class="msg-content">
+      <div class="msg-bubble">${formatted}</div>
+      <div class="msg-time">${getTime()}</div>
+    </div>`;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function showTyping() {
+  const chat = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = 'typing'; div.id = 'typingEl';
+  div.innerHTML = `
+    <div class="msg-avatar" style="background:linear-gradient(135deg,var(--saffron),var(--saffron-glow));width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;">🌾</div>
+    <div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typingEl');
+  if (t) t.remove();
+}
+
+async function sendMessage() {
+  const input = document.getElementById('inputBox');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  input.style.height = 'auto';
+  addMessage(text, true);
+  conversation.push({role:'user', content:text});
+  showTyping();
+
+  try {
+    const res = await fetch('http://localhost:5000/chat', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        messages: conversation,
+        lang_name: selectedLang.name
+      })
+    });
+    if (!res.ok) throw new Error('Server error');
+    const data = await res.json();
+    const reply = data.reply;
+    conversation.push({role:'assistant', content:reply});
+    removeTyping();
+    addMessage(reply, false);
+    speakText(reply, selectedLang);
+  } catch(err) {
+    removeTyping();
+    addMessage('⚠️ Cannot connect to server!\n\nPlease run: python server.py\n\nThen refresh this page.', false);
+  }
+}
+
+function sendQuick(text) {
+  document.getElementById('inputBox').value = text;
+  sendMessage();
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// Voice input — uses correct language code from selectedLang
+function toggleMic() { isListening ? stopMic() : startMic(); }
+
+function startMic() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('Please use Chrome browser for voice input!');
+    return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = selectedLang.key; // Use correct language sr_code
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  recognition.onstart = () => {
+    isListening = true;
+    document.getElementById('micBtn').classList.add('listening');
+    document.getElementById('micBtn').innerHTML = '🔴';
+    document.getElementById('voiceWave').classList.add('active');
+    document.getElementById('listeningText').textContent =
+      selectedLang.dialect_key === 'en' ? 'Listening...' : 'सुन रहा हूँ...';
+  };
+  recognition.onresult = e => {
+    const text = e.results[0][0].transcript;
+    document.getElementById('inputBox').value = text;
+    stopMic();
+    setTimeout(sendMessage, 300);
+  };
+  recognition.onerror = () => stopMic();
+  recognition.onend = () => stopMic();
+  recognition.start();
+}
+
+function stopMic() {
+  isListening = false;
+  if (recognition) recognition.stop();
+  document.getElementById('micBtn').classList.remove('listening');
+  document.getElementById('micBtn').innerHTML = '🎤';
+  document.getElementById('voiceWave').classList.remove('active');
+}
+
+// Voice output — speaks in selected language
+let currentAudio = null;
+
+async function speakText(text, lang) {
+  stopSpeaking();
+  document.getElementById('speakingBar').classList.add('active');
+  document.getElementById('speakingText').textContent =
+    lang.dialect_key === 'en' ? 'GramSevak is speaking...' : 'GramSevak बोल रहा है...';
+  try {
+    const res = await fetch('http://localhost:5000/speak', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ text: text, lang_code: lang.gtts })
+    });
+    const data = await res.json();
+    if (data.audio) {
+      const audio = new Audio('data:audio/mp3;base64,' + data.audio);
+      currentAudio = audio;
+      audio.onended = () => document.getElementById('speakingBar').classList.remove('active');
+      audio.play();
+    }
+  } catch(e) {
+    document.getElementById('speakingBar').classList.remove('active');
+  }
+}
+
+function stopSpeaking() {
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+    currentAudio = null;
+  }
+  document.getElementById('speakingBar').classList.remove('active');
+}
+
+const CHIPS = {
+  'en': [
+    {emoji:'🏠', text:'I need a house', query:'I need a house under government scheme'},
+    {emoji:'📚', text:'Scholarship', query:'I need scholarship for studies'},
+    {emoji:'🌾', text:'Farmer Help', query:'I am a farmer and need help'},
+    {emoji:'🔥', text:'Gas Connection', query:'I need gas connection'},
+    {emoji:'👧', text:'Girl Child Scheme', query:'I need scheme for my daughter'},
+    {emoji:'🏥', text:'Health Insurance', query:'I need health insurance scheme'},
+    {emoji:'💳', text:'Kisan Credit', query:'I need Kisan Credit Card'},
+    {emoji:'👴', text:'Old Age Pension', query:'I need old age pension'},
+  ],
+  'hi': [
+    {emoji:'🏠', text:'मकान चाहिए', query:'मुझे मकान चाहिए'},
+    {emoji:'📚', text:'छात्रवृत्ति', query:'पढ़ाई के लिए छात्रवृत्ति चाहिए'},
+    {emoji:'🌾', text:'किसान योजना', query:'किसान योजना के बारे में बताओ'},
+    {emoji:'🔥', text:'गैस कनेक्शन', query:'गैस कनेक्शन चाहिए'},
+    {emoji:'👧', text:'बेटी योजना', query:'बेटी के लिए योजना बताओ'},
+    {emoji:'🏥', text:'स्वास्थ्य बीमा', query:'स्वास्थ्य बीमा योजना चाहिए'},
+    {emoji:'💳', text:'किसान क्रेडिट', query:'किसान क्रेडिट कार्ड चाहिए'},
+    {emoji:'👴', text:'वृद्धा पेंशन', query:'वृद्धा पेंशन योजना बताओ'},
+  ],
+  'bhojpuri': [
+    {emoji:'🏠', text:'घर चाहीं', query:'हमके घर चाहीं सरकारी योजना से'},
+    {emoji:'📚', text:'पढ़ाई मदद', query:'पढ़ाई खातिर छात्रवृत्ति चाहीं'},
+    {emoji:'🌾', text:'किसान मदद', query:'हम किसान हईं, मदद चाहीं'},
+    {emoji:'🔥', text:'गैस कनेक्शन', query:'गैस कनेक्शन चाहीं'},
+    {emoji:'👧', text:'बेटी योजना', query:'बेटी खातिर योजना बतावऽ'},
+    {emoji:'🏥', text:'स्वास्थ्य बीमा', query:'स्वास्थ्य बीमा योजना बतावऽ'},
+  ],
+  'bagheli': [
+    {emoji:'🏠', text:'मकान चाहिए', query:'हमका मकान चाहिए सरकारी योजना से'},
+    {emoji:'📚', text:'पढ़ाई मदद', query:'पढ़ाई खातिर छात्रवृत्ति चाहिए'},
+    {emoji:'🌾', text:'किसान मदद', query:'हम किसान हवन, मदद चाहिए'},
+    {emoji:'🔥', text:'गैस कनेक्शन', query:'गैस कनेक्शन चाहिए'},
+    {emoji:'👧', text:'बेटी योजना', query:'बेटी खातिर योजना बताव'},
+    {emoji:'🏥', text:'स्वास्थ्य बीमा', query:'स्वास्थ्य बीमा योजना बताव'},
+  ],
+  'haryanvi': [
+    {emoji:'🏠', text:'घर चाहिए', query:'म्हाने घर चाहिए सरकारी योजना से'},
+    {emoji:'📚', text:'पढ़ाई मदद', query:'पढ़ाई खातर छात्रवृत्ति चाहिए'},
+    {emoji:'🌾', text:'किसान मदद', query:'हम किसान सां, मदद चाहिए'},
+    {emoji:'🔥', text:'गैस कनेक्शन', query:'गैस कनेक्शन चाहिए'},
+    {emoji:'👧', text:'बेटी योजना', query:'बेटी खातर योजना बता'},
+    {emoji:'🏥', text:'स्वास्थ्य बीमा', query:'स्वास्थ्य बीमा योजना बता'},
+  ],
+  'rajasthani': [
+    {emoji:'🏠', text:'घर चाहिए', query:'म्हाने घर चाहिए सरकारी योजना से'},
+    {emoji:'📚', text:'पढ़ाई मदद', query:'पढ़ाई सारू छात्रवृत्ति चाहिए'},
+    {emoji:'🌾', text:'किसान मदद', query:'हम किसान हां, मदद चाहिए'},
+    {emoji:'🔥', text:'गैस कनेक्शन', query:'गैस कनेक्शन चाहिए'},
+    {emoji:'👧', text:'बेटी योजना', query:'बेटी सारू योजना बताओ'},
+    {emoji:'🏥', text:'स्वास्थ्य बीमा', query:'स्वास्थ्य बीमा योजना बताओ'},
+  ],
+  'ta': [
+    {emoji:'🏠', text:'வீடு வேண்டும்', query:'எனக்கு வீடு வேண்டும்'},
+    {emoji:'📚', text:'கல்வி உதவி', query:'படிப்புக்கு உதவி வேண்டும்'},
+    {emoji:'🌾', text:'விவசாயி உதவி', query:'நான் விவசாயி, உதவி வேண்டும்'},
+    {emoji:'🔥', text:'கேஸ் இணைப்பு', query:'கேஸ் இணைப்பு வேண்டும்'},
+    {emoji:'🏥', text:'மருத்துவ காப்பீடு', query:'மருத்துவ காப்பீடு திட்டம்'},
+  ],
+  'te': [
+    {emoji:'🏠', text:'ఇల్లు కావాలి', query:'నాకు ఇల్లు కావాలి'},
+    {emoji:'📚', text:'చదువు సహాయం', query:'చదువుకు స్కాలర్షిప్ కావాలి'},
+    {emoji:'🌾', text:'రైతు సహాయం', query:'నేను రైతుని, సహాయం కావాలి'},
+    {emoji:'🔥', text:'గ్యాస్ కనెక్షన్', query:'గ్యాస్ కనెక్షన్ కావాలి'},
+    {emoji:'🏥', text:'ఆరోగ్య బీమా', query:'ఆరోగ్య బీమా పథకం'},
+  ],
+  'ml': [
+    {emoji:'🏠', text:'വീട് വേണം', query:'എനിക്ക് വീട് വേണം'},
+    {emoji:'📚', text:'പഠന സഹായം', query:'പഠനത്തിന് സ്കോളർഷിപ്പ് വേണം'},
+    {emoji:'🌾', text:'കർഷക സഹായം', query:'ഞാൻ കർഷകൻ, സഹായം വേണം'},
+    {emoji:'🔥', text:'ഗ്യാസ് കണക്ഷൻ', query:'ഗ്യാസ് കണക്ഷൻ വേണം'},
+    {emoji:'🏥', text:'ആരോഗ്യ ഇൻഷുറൻസ്', query:'ആരോഗ്യ ഇൻഷുറൻസ് പദ്ധതി'},
+  ],
+  'mr': [
+    {emoji:'🏠', text:'घर हवे आहे', query:'मला घर हवे आहे'},
+    {emoji:'📚', text:'शिष्यवृत्ती', query:'शिक्षणासाठी शिष्यवृत्ती हवी'},
+    {emoji:'🌾', text:'शेतकरी मदत', query:'मी शेतकरी आहे, मदत हवी'},
+    {emoji:'🔥', text:'गॅस कनेक्शन', query:'गॅस कनेक्शन हवे'},
+    {emoji:'🏥', text:'आरोग्य विमा', query:'आरोग्य विमा योजना सांगा'},
+  ],
+  'bn': [
+    {emoji:'🏠', text:'বাড়ি চাই', query:'আমার বাড়ি চাই'},
+    {emoji:'📚', text:'বৃত্তি চাই', query:'পড়াশোনার জন্য বৃত্তি চাই'},
+    {emoji:'🌾', text:'কৃষক সাহায্য', query:'আমি কৃষক, সাহায্য চাই'},
+    {emoji:'🔥', text:'গ্যাস সংযোগ', query:'গ্যাস সংযোগ চাই'},
+    {emoji:'🏥', text:'স্বাস্থ্য বীমা', query:'স্বাস্থ্য বীমা প্রকল্প'},
+  ],
+'gu': [
+    {emoji:'🏠', text:'ઘર જોઈએ છે', query:'મને ઘર જોઈએ છે'},
+    {emoji:'📚', text:'શિષ્યવૃત્તિ', query:'અભ્યાસ માટે શિષ્યવૃત્તિ જોઈએ'},
+    {emoji:'🌾', text:'ખેડૂત મદદ', query:'હું ખેડૂત છું, મદદ જોઈએ'},
+    {emoji:'🔥', text:'ગેસ કનેક્શન', query:'ગેસ કનેક્શન જોઈએ'},
+    {emoji:'🏥', text:'આરોગ્ય વીમો', query:'આરોગ્ય વીમો યોજના'},
+  ],
+  'pa': [
+    {emoji:'🏠', text:'ਘਰ ਚਾਹੀਦਾ', query:'ਮੈਨੂੰ ਘਰ ਚਾਹੀਦਾ ਹੈ'},
+    {emoji:'📚', text:'ਵਜ਼ੀਫ਼ਾ', query:'ਪੜ੍ਹਾਈ ਲਈ ਵਜ਼ੀਫ਼ਾ ਚਾਹੀਦਾ'},
+    {emoji:'🌾', text:'ਕਿਸਾਨ ਮਦਦ', query:'ਮੈਂ ਕਿਸਾਨ ਹਾਂ, ਮਦਦ ਚਾਹੀਦੀ'},
+    {emoji:'🔥', text:'ਗੈਸ ਕੁਨੈਕਸ਼ਨ', query:'ਗੈਸ ਕੁਨੈਕਸ਼ਨ ਚਾਹੀਦਾ'},
+    {emoji:'🏥', text:'ਸਿਹਤ ਬੀਮਾ', query:'ਸਿਹਤ ਬੀਮਾ ਯੋਜਨਾ'},
+  ],
+  'kn': [
+    {emoji:'🏠', text:'ಮನೆ ಬೇಕು', query:'ನನಗೆ ಮನೆ ಬೇಕು'},
+    {emoji:'📚', text:'ವಿದ್ಯಾರ್ಥಿ ವೇತನ', query:'ಓದಿಗೆ ವಿದ್ಯಾರ್ಥಿ ವೇತನ ಬೇಕು'},
+    {emoji:'🌾', text:'ರೈತ ಸಹಾಯ', query:'ನಾನು ರೈತ, ಸಹಾಯ ಬೇಕು'},
+    {emoji:'🔥', text:'ಗ್ಯಾಸ್ ಸಂಪರ್ಕ', query:'ಗ್ಯಾಸ್ ಸಂಪರ್ಕ ಬೇಕು'},
+    {emoji:'🏥', text:'ಆರೋಗ್ಯ ವಿಮೆ', query:'ಆರೋಗ್ಯ ವಿಮೆ ಯೋಜನೆ'},
+  ],
+};
+
+function showChips(lang) {
+  // Use language specific chips or generate from Hindi with correct language
+  const chips = CHIPS[lang.dialect_key] || CHIPS['hi'];
+  
+  // For major languages, translate chip queries to selected language
+  const chipsHTML = chips.map(c =>
+    `<div class="chip" onclick="sendQuick('${c.query}')">${c.emoji} ${c.text}</div>`
+  ).join('');
+  
+  const existing = document.getElementById('quickChips');
+  if (existing) existing.remove();
+  
+  const chipsDiv = document.createElement('div');
+  chipsDiv.id = 'quickChips';
+  chipsDiv.style.cssText = 'display:flex;flex-wrap:wrap;gap:10px;padding:16px 0 8px;';
+  chipsDiv.innerHTML = chipsHTML;
+  document.getElementById('chatArea').appendChild(chipsDiv);
+}
+
+
+// Show Hindi welcome on load
+window.onload = () => {
+  showChips(LANGUAGES[0]);
+  const welcome = WELCOME_MESSAGES['hi'];
+  addMessage(welcome, false);
+  
+  // Add click-to-speak button since browsers block autoplay
+  const chat = document.getElementById('chatArea');
+  const btn = document.createElement('div');
+  btn.id = 'startBtn';
+  btn.style.cssText = 'text-align:center;padding:12px;';
+  btn.innerHTML = `<button onclick="startWelcome()" style="background:linear-gradient(135deg,#FF6B00,#FF8C00);border:none;border-radius:100px;padding:10px 24px;color:white;font-size:13px;cursor:pointer;font-family:DM Sans,sans-serif;">🔊 GramSevak को सुनें</button>`;
+  chat.appendChild(btn);
+};
+
+function startWelcome() {
+  const btn = document.getElementById('startBtn');
+  if (btn) btn.remove();
+  speakText(WELCOME_MESSAGES['hi'], LANGUAGES[0]);
+}
+</script>
+</body>
+</html>
