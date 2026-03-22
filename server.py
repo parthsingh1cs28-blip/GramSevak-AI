@@ -238,21 +238,77 @@ def home():
 
 from twilio.twiml.messaging_response import MessagingResponse
 
+# Store conversation per user
+whatsapp_conversations = {}
+
+def detect_language(text):
+    """Auto detect language from script"""
+    if any('\u0900' <= c <= '\u097F' for c in text):
+        return "हिंदी (Hindi)"
+    elif any('\u0B80' <= c <= '\u0BFF' for c in text):
+        return "தமிழ் (Tamil)"
+    elif any('\u0C00' <= c <= '\u0C7F' for c in text):
+        return "తెలుగు (Telugu)"
+    elif any('\u0D00' <= c <= '\u0D7F' for c in text):
+        return "മലയാളം (Malayalam)"
+    elif any('\u0A00' <= c <= '\u0A7F' for c in text):
+        return "ਪੰਜਾਬੀ (Punjabi)"
+    elif any('\u0A80' <= c <= '\u0AFF' for c in text):
+        return "ગુજરાતી (Gujarati)"
+    elif any('\u0980' <= c <= '\u09FF' for c in text):
+        return "বাংলা (Bengali)"
+    elif any('\u0C80' <= c <= '\u0CFF' for c in text):
+        return "ಕನ್ನಡ (Kannada)"
+    elif any('\u0600' <= c <= '\u06FF' for c in text):
+        return "اردو (Urdu)"
+    else:
+        return "हिंदी (Hindi)"  # Default Hindi
+
 @app.route('/whatsapp', methods=['POST'])
 def whatsapp():
     incoming_msg = request.form.get('Body', '').strip()
     sender = request.form.get('From', '')
+    num_media = int(request.form.get('NumMedia', 0))
     
-    # Detect language from message (default Hindi)
-    lang_name = "हिंदी (Hindi)"
+    # Handle voice notes
+    if num_media > 0:
+        media_type = request.form.get('MediaContentType0', '')
+        if 'audio' in media_type:
+            incoming_msg = "🎤 Voice note received. Sorry, voice notes are not supported on WhatsApp yet. Please type your message in Hindi or your language."
+        
+    # If empty message
+    if not incoming_msg:
+        incoming_msg = "Hello"
     
-    # Build messages
-    messages = [{"role": "user", "content": incoming_msg}]
+    # Auto detect language
+    lang_name = detect_language(incoming_msg)
+    
+    # Get or create conversation history for this user
+    if sender not in whatsapp_conversations:
+        whatsapp_conversations[sender] = []
+    
+    # Add user message to history
+    whatsapp_conversations[sender].append({
+        "role": "user",
+        "content": incoming_msg
+    })
+    
+    # Keep only last 10 messages to save tokens
+    if len(whatsapp_conversations[sender]) > 10:
+        whatsapp_conversations[sender] = whatsapp_conversations[sender][-10:]
+    
+    # Build full messages
     system_prompt = get_system_prompt(lang_name)
-    full_messages = [{"role": "system", "content": system_prompt}] + messages
+    full_messages = [{"role": "system", "content": system_prompt}] + whatsapp_conversations[sender]
     
     # Get AI reply
     reply = get_groq_response(full_messages)
+    
+    # Add reply to history
+    whatsapp_conversations[sender].append({
+        "role": "assistant",
+        "content": reply
+    })
     
     # Send back via Twilio
     resp = MessagingResponse()
