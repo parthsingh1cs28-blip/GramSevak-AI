@@ -198,6 +198,10 @@ def get_welcome():
     msg = WELCOME_MESSAGES.get(dialect_key, WELCOME_MESSAGES['hi'])
     return jsonify({"welcome": msg})
 
+@app.route('/')
+def home():
+    return open('index.html', encoding='utf-8').read()
+
 if __name__ == '__main__':
     print("=" * 55)
     print("🌾 GramSevak Server — Apna Haq, Apni Bhasha 🇮🇳")
