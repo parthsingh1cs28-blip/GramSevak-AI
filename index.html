@@ -343,7 +343,7 @@ async function sendMessage() {
   showTyping();
 
   try {
-    const res = await fetch('http://localhost:5000/chat', {
+    const res = await fetch('https://gramsevak-ai.onrender.com/chat', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
@@ -431,7 +431,7 @@ async function speakText(text, lang) {
   document.getElementById('speakingText').textContent =
     lang.dialect_key === 'en' ? 'GramSevak is speaking...' : 'GramSevak बोल रहा है...';
   try {
-    const res = await fetch('http://localhost:5000/speak', {
+    const res = await fetch('https://gramsevak-ai.onrender.com/speak', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({ text: text, lang_code: lang.gtts })
